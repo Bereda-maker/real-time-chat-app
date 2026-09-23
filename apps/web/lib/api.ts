@@ -1,3 +1,4 @@
+// apps/web/lib/api.ts
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://real-time-chat-app-azwu.onrender.com";
 
 function authHeaders(): Record<string, string> {
@@ -37,13 +38,39 @@ export async function listChannels() {
   return (await res.json()).channels;
 }
 
-export async function createChannel(memberUsernames: string[], isGroup: boolean, name?: string) {
-  const res = await fetch(`${API_URL}/channels`, {
+// NEW: Fetch all users on the platform (excluding yourself)
+export async function getUsers() {
+  const res = await fetch(`${API_URL}/users`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("could not fetch users");
+  return (await res.json()).users as { id: string; username: string }[];
+}
+
+// NEW: Fetch single channel details (for the chat header)
+export async function getChannel(channelId: string) {
+  const res = await fetch(`${API_URL}/channels/${channelId}`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("could not fetch channel");
+  return (await res.json()).channel;
+}
+
+// NEW: Get or create a Direct Message channel
+export async function createDirectChannel(targetUserId: string) {
+  const res = await fetch(`${API_URL}/channels/direct`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ memberUsernames, isGroup, name }),
+    body: JSON.stringify({ targetUserId }),
   });
-  if (!res.ok) throw new Error((await res.json()).error ?? "could not create channel");
+  if (!res.ok) throw new Error((await res.json()).error ?? "could not create direct channel");
+  return (await res.json()).channel;
+}
+
+// UPDATED: Renamed to createGroupChannel to match the new backend route
+export async function createGroupChannel(memberUsernames: string[], name: string) {
+  const res = await fetch(`${API_URL}/channels/group`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ memberUsernames, name }),
+  });
+  if (!res.ok) throw new Error((await res.json()).error ?? "could not create group channel");
   return (await res.json()).channel;
 }
 
