@@ -1,24 +1,20 @@
-// apps/server/src/routes/users.ts
-import { Hono } from 'hono';
-import { db } from '../db'; // your DB connection
-import { users } from '../db/schema'; // your schema
-import { eq, ne } from 'drizzle-orm'; // or your ORM
+import { Hono } from "hono";
+import { sql } from "../db";
+import { requireAuth, type AuthVariables } from "../middleware";
 
-const usersRoute = new Hono();
+export const userRoutes = new Hono<{ Variables: AuthVariables }>();
+userRoutes.use("*", requireAuth);
 
-// Get all users except the current user
-usersRoute.get('/', async (c) => {
-  const currentUserId = c.get('userId'); // Assuming you have auth middleware setting this
-  
-  const allUsers = await db.select({
-    id: users.id,
-    username: users.username,
-    // add avatar if you have it
-  })
-  .from(users)
-  .where(ne(users.id, currentUserId));
+// Get all users EXCEPT the currently logged-in user
+userRoutes.get("/", async (c) => {
+  const currentUserId = c.get("userId") as string;
 
-  return c.json(allUsers);
+  const users = await sql`
+    SELECT id, username, created_at
+    FROM users
+    WHERE id != ${currentUserId}
+    ORDER BY username ASC
+  `;
+
+  return c.json({ users });
 });
-
-export default usersRoute;
