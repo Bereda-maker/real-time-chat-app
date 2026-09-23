@@ -5,6 +5,7 @@ import { authRoutes } from "./routes/auth";
 import { channelRoutes } from "./routes/channels";
 import { messageRoutes } from "./routes/messages";
 import { createWsHandler } from "./ws/handler";
+import usersRoute from './routes/users';
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "http://localhost:3000").split(",");
 const { upgradeWebSocket, websocket } = createBunWebSocket();
@@ -23,6 +24,7 @@ app.route("/channels", messageRoutes); // mounts GET /channels/:id/messages
 // library, no separate process) — that's the specific reason this project
 // picked Bun over Node for the backend. See README "Why this stack".
 app.get("/ws/:channelId", upgradeWebSocket(createWsHandler()));
+app.route('/api/users', usersRoute);
 
 const port = Number(process.env.PORT ?? 3001);
 console.log(`chat-server listening on :${port}`);
