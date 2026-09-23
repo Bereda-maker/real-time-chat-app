@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getHistory, getWsToken, getChannel } from "../../../lib/api"; // Add getChannel to your api lib
+import { getHistory, getWsToken, getChannel } from "../../../lib/api";
 import { useChatSocket, type ChatMessage } from "../../../lib/useChatSocket";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:3001";
@@ -16,9 +16,11 @@ export default function ChatPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [draft, setDraft] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
-  
-  // NEW: State to store channel info (like the other user's name for the header)
-  const [channelInfo, setChannelInfo] = useState<{ name: string; is_group: boolean } | null>(null);
+  const [channelInfo, setChannelInfo] = useState<{
+    name: string | null;
+    is_group: boolean;
+    members?: { id: string; username: string }[];
+  } | null>(null);
 
   const listRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -32,21 +34,14 @@ export default function ChatPage() {
     setUserId(localStorage.getItem("userId"));
     getWsToken().then(setWsToken).catch(() => router.push("/login"));
 
-    // NEW: Fetch channel details for the header
     getChannel(channelId)
-      .then((data) => setChannelInfo(data.channel))
+      .then((data) => setChannelInfo(data))
       .catch(() => router.push("/chat"));
   }, [router, channelId]);
 
-  const { connected, messages, setMessages, typingUsers, sendMessage, setTyping } = useChatSocket(
-    WS_URL,
-    channelId,
-    wsToken
-  );
+  const { connected, messages, setMessages, typingUsers, sendMessage, setTyping } =
+    useChatSocket(WS_URL, channelId, wsToken);
 
-  // ... (Rest of your existing logic for history, loadMore, onSend, onDraftChange stays the same)
-  
-  // Your existing useEffect for history
   useEffect(() => {
     if (!channelId) return;
     getHistory(channelId).then(({ messages: history, nextCursor }) => {
@@ -102,9 +97,15 @@ export default function ChatPage() {
   const othersTyping = [...typingUsers].filter((id) => id !== userId);
 
   // Figure out the header label
-  const headerLabel = channelInfo 
-    ? (channelInfo.is_group ? channelInfo.name : "Direct Message") 
-    : "Loading...";
+  let headerLabel = "Loading…";
+  if (channelInfo) {
+    if (channelInfo.is_group) {
+      headerLabel = channelInfo.name ?? "Group";
+    } else {
+      const other = channelInfo.members?.find((m) => m.id !== userId);
+      headerLabel = other?.username ?? "Direct Message";
+    }
+  }
 
   return (
     <>
@@ -124,7 +125,10 @@ export default function ChatPage() {
         )}
 
         {messages.map((m) => (
-          <div key={m.clientId ?? m.id} className={`bubble-row ${m.senderId === userId ? "mine" : ""}`}>
+          <div
+            key={m.clientId ?? m.id}
+            className={`bubble-row ${m.senderId === userId ? "mine" : ""}`}
+          >
             <div className={`bubble ${m.id.startsWith("pending-") ? "pending" : ""}`}>
               {m.body}
               <div className="meta">{new Date(m.createdAt).toLocaleTimeString()}</div>
@@ -138,7 +142,8 @@ export default function ChatPage() {
       </div>
 
       <div className="typing-indicator">
-        {othersTyping.length > 0 && (othersTyping.length === 1 ? "Someone is typing…" : "Several people are typing…")}
+        {othersTyping.length > 0 &&
+          (othersTyping.length === 1 ? "Someone is typing…" : "Several people are typing…")}
       </div>
 
       <form className="composer" onSubmit={onSend}>
