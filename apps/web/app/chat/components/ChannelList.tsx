@@ -19,6 +19,7 @@ export default function ChannelList({
 }) {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -73,7 +74,9 @@ export default function ChannelList({
           <button
             key={channel.id}
             type="button"
-            className={`channel-item ${isActive ? "active" : ""}`}
+            className={`channel-item ${
+              isActive ? "active" : ""
+            }`}
             onClick={() => router.push(`/chat/${channel.id}`)}
             aria-current={isActive ? "page" : undefined}
           >
