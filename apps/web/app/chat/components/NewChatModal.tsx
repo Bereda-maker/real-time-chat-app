@@ -42,8 +42,8 @@ export default function NewChatModal({ onClose }: { onClose: () => void }) {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden text-black">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-lg font-bold">Start a new chat</h2>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-gray-500 hover:text-black transition-colors"
             aria-label="Close"
           >
@@ -53,7 +53,7 @@ export default function NewChatModal({ onClose }: { onClose: () => void }) {
 
         <div className="p-2 max-h-96 overflow-y-auto">
           {isLoading ? (
-            <p className="text-center p-4 text-gray-500">Loading users...</p>
+            <p className="text-center p-4 text-gray-500">Loading users…</p>
           ) : error ? (
             <p className="text-center p-4 text-red-500">{error}</p>
           ) : users.length === 0 ? (
