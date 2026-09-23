@@ -1,4 +1,3 @@
-// apps/web/lib/api.ts
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://real-time-chat-app-azwu.onrender.com";
 
 function authHeaders(): Record<string, string> {
@@ -27,7 +26,10 @@ export async function register(username: string, password: string) {
 }
 
 export async function getWsToken() {
-  const res = await fetch(`${API_URL}/auth/ws-token`, { method: "POST", headers: authHeaders() });
+  const res = await fetch(`${API_URL}/auth/ws-token`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error("could not get ws token");
   return (await res.json()).wsToken as string;
 }
@@ -38,21 +40,18 @@ export async function listChannels() {
   return (await res.json()).channels;
 }
 
-// NEW: Fetch all users on the platform (excluding yourself)
 export async function getUsers() {
   const res = await fetch(`${API_URL}/users`, { headers: authHeaders() });
   if (!res.ok) throw new Error("could not fetch users");
   return (await res.json()).users as { id: string; username: string }[];
 }
 
-// NEW: Fetch single channel details (for the chat header)
 export async function getChannel(channelId: string) {
   const res = await fetch(`${API_URL}/channels/${channelId}`, { headers: authHeaders() });
   if (!res.ok) throw new Error("could not fetch channel");
   return (await res.json()).channel;
 }
 
-// NEW: Get or create a Direct Message channel
 export async function createDirectChannel(targetUserId: string) {
   const res = await fetch(`${API_URL}/channels/direct`, {
     method: "POST",
@@ -63,7 +62,6 @@ export async function createDirectChannel(targetUserId: string) {
   return (await res.json()).channel;
 }
 
-// UPDATED: Renamed to createGroupChannel to match the new backend route
 export async function createGroupChannel(memberUsernames: string[], name: string) {
   const res = await fetch(`${API_URL}/channels/group`, {
     method: "POST",
