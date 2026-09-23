@@ -1,4 +1,3 @@
-```ts
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
   "https://real-time-chat-app-azwu.onrender.com";
@@ -331,11 +330,8 @@ export type Channel = {
 
 export type Message = {
   id: string;
-  channel_id?: string;
-  sender_id?: string;
-  content?: string;
-  created_at?: string;
-  username?: string;
-  [key: string]: unknown;
+  channel_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
 };
-```

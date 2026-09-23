@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createChannel, listChannels } from "../lib/api";
+import { createDirectChannel, getUsers, listChannels } from "../lib/api";
 
 type Channel = { id: string; name: string | null; is_group: boolean };
 
@@ -11,6 +11,7 @@ export default function HomePage() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [newUsername, setNewUsername] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!localStorage.getItem("token")) {
@@ -24,9 +25,23 @@ export default function HomePage() {
 
   async function startChannel(e: React.FormEvent) {
     e.preventDefault();
-    if (!newUsername.trim()) return;
-    const channel = await createChannel([newUsername.trim()], false);
-    router.push(`/chat/${channel.id}`);
+    const target = newUsername.trim();
+    if (!target) return;
+
+    try {
+      const users = await getUsers();
+      const targetUser = users.find((u) => u.username === target);
+
+      if (!targetUser) {
+        setError(`No user found with username "${target}"`);
+        return;
+      }
+
+      const channel = await createDirectChannel(targetUser.id);
+      router.push(`/chat/${channel.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start chat");
+    }
   }
 
   return (
@@ -56,10 +71,19 @@ export default function HomePage() {
           <input
             placeholder="Start a chat with username…"
             value={newUsername}
-            onChange={(e) => setNewUsername(e.target.value)}
+            onChange={(e) => {
+              setNewUsername(e.target.value);
+              if (error) setError(null);
+            }}
           />
           <button type="submit">Start chat</button>
         </form>
+
+        {error && (
+          <p role="alert" style={{ color: "var(--danger, #f87171)", fontSize: "0.85rem", marginTop: 10 }}>
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );

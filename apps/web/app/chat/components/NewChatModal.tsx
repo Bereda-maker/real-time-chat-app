@@ -22,7 +22,7 @@ export default function NewChatModal({ onClose }: { onClose: () => void }) {
         setIsLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Could not load users");
         setIsLoading(false);
       });
   }, []);
@@ -32,46 +32,45 @@ export default function NewChatModal({ onClose }: { onClose: () => void }) {
       const channel = await createDirectChannel(targetUserId);
       onClose();
       router.push(`/chat/${channel.id}`);
-    } catch (err: any) {
-      alert(err.message || "Failed to start chat");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start chat");
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden text-black">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-lg font-bold">Start a new chat</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-black transition-colors"
-            aria-label="Close"
-          >
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Start a new chat"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal-header">
+          <h2>Start a new chat</h2>
+          <button className="modal-close" onClick={onClose} aria-label="Close">
             ✕
           </button>
         </div>
 
-        <div className="p-2 max-h-96 overflow-y-auto">
+        <div className="modal-body">
           {isLoading ? (
-            <p className="text-center p-4 text-gray-500">Loading users…</p>
+            <p className="modal-hint">Loading users…</p>
           ) : error ? (
-            <p className="text-center p-4 text-red-500">{error}</p>
+            <p className="modal-hint error">{error}</p>
           ) : users.length === 0 ? (
-            <p className="text-center p-4 text-gray-500">
-              No other users found. Invite a friend!
-            </p>
+            <p className="modal-hint">No other users found. Invite a friend!</p>
           ) : (
-            <ul>
+            <ul className="user-list">
               {users.map((user) => (
                 <li key={user.id}>
                   <button
+                    type="button"
+                    className="user-row"
                     onClick={() => handleSelectUser(user.id)}
-                    className="w-full text-left p-3 hover:bg-gray-100 rounded-md transition-colors flex items-center gap-3"
                   >
-                    <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-lg">
-                      {user.username[0].toUpperCase()}
-                    </div>
-                    <span className="font-medium">{user.username}</span>
+                    <span className="avatar">{user.username[0]?.toUpperCase() ?? "?"}</span>
+                    <span>{user.username}</span>
                   </button>
                 </li>
               ))}

@@ -45,7 +45,16 @@ export default function ChatPage() {
   useEffect(() => {
     if (!channelId) return;
     getHistory(channelId).then(({ messages: history, nextCursor }) => {
-      setMessages(history);
+      setMessages(
+        history.map((m) => ({
+          type: "message" as const,
+          id: m.id,
+          channelId: m.channel_id,
+          senderId: m.sender_id,
+          body: m.body,
+          createdAt: m.created_at,
+        })),
+      );
       setNextCursor(nextCursor);
     });
   }, [channelId, setMessages]);
@@ -59,7 +68,17 @@ export default function ChatPage() {
     setLoadingMore(true);
     const prevHeight = listRef.current?.scrollHeight ?? 0;
     const { messages: older, nextCursor: newCursor } = await getHistory(channelId, nextCursor);
-    setMessages((prev) => [...older, ...prev]);
+    setMessages((prev) => [
+      ...older.map((m) => ({
+        type: "message" as const,
+        id: m.id,
+        channelId: m.channel_id,
+        senderId: m.sender_id,
+        body: m.body,
+        createdAt: m.created_at,
+      })),
+      ...prev,
+    ]);
     setNextCursor(newCursor);
     setLoadingMore(false);
     requestAnimationFrame(() => {
